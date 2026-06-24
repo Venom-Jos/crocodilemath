@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🐊 Petualangan Buaya Cerdas</title>
+    <style>
+        /* =========================================
+           VARIABEL & RESET CSS
+        ========================================= */
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --river-light: #81D4FA;
+            --river-dark: #0288D1;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --stone: #9E9E9E;
+            --stone-dark: #616161;
+            --danger: #F44336;
+            --warning: #FFC107;
+            --font-main: 'Comic Sans MS', 'Chalkboard SE', 'Fredoka One', cursive, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* Mencegah teks terblokir saat bermain */
+            -webkit-tap-highlight-color: transparent; /* Hilangkan highlight biru di mobile */
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: #87CEEB; /* Warna langit biru cerah */
+            color: var(--text-dark);
+            overflow: hidden; /* Mencegah scroll */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* =========================================
+           KONTROL GLOBAL (Pojok Kanan Atas)
+        ========================================= */
+        #global-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid var(--primary-dark);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            background: #fff;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* =========================================
+           MENU UTAMA
+        ========================================= */
+        #main-menu {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #87CEEB 0%, #4CAF50 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+        }
+
+        .menu-content {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 4px solid var(--primary-dark);
+            max-width: 90%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            font-size: clamp(28px, 5vw, 42px);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+        }
+
+        h2 {
+            color: var(--river-dark);
+            font-size: clamp(18px, 3vw, 24px);
+            margin-bottom: 5px;
+        }
+
+        h3 {
+            color: #666;
+            font-size: clamp(14px, 2vw, 18px);
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            background: var(--warning);
+            border: 3px solid #FF8F00;
+            color: #b75e00;
+            padding: 15px 30px;
+            font-size: 22px;
+            font-family: inherit;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 #FF8F00, 0 10px 10px rgba(0,0,0,0.2);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: #FFD54F;
+            box-shadow: 0 11px 0 #FF8F00, 0 15px 15px rgba(0,0,0,0.3);
+        }
+
+        .mode-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #FF8F00, 0 2px 2px rgba(0,0,0,0.2);
+        }
+
+        /* =========================================
+           AREA PERMAINAN
+        ========================================= */
+        #game-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: row; /* Default untuk Duel desktop */
+        }
+
+        .player-area {
+            flex: 1;
+            position: relative;
+            border: 2px solid #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #87CEEB; /* Langit awal */
+            transition: background 0.5s;
+        }
+
+        /* Status Cuaca Area */
+        .player-area.cloudy {
+            background: #78909C; /* Langit mendung */
+        }
+
+        .player-area.sunny {
+            background: #4fc3f7; /* Langit sangat cerah */
+        }
+
+        /* Header Info Permainan */
+        .info-panel {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            border-bottom: 3px solid #ccc;
+            z-index: 10;
+        }
+
+        /* Latar Belakang Lingkungan */
+        .environment {
+            flex: 1;
+            position: relative;
+        }
+
+        /* Sungai */
+        .river {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(180deg, var(--river-light) 0%, var(--river-dark) 100%);
+            border-top: 8px solid #81C784; /* Rumput tepi */
+        }
+
+        .player-area.cloudy .river {
+            background: linear-gradient(180deg, #546E7A 0%, #263238 100%);
+        }
+
+        /* Hiasan Alam */
+        .tree { position: absolute; font-size: 40px; top: -35px; }
+        .tree.left { left: 10%; }
+        .tree.right { right: 10%; }
+        .cloud { position: absolute; font-size: 50px; opacity: 0.8; animation: moveCloud 20s linear infinite; }
+        
+        /* Area Soal */
+        .question-box {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 3px solid var(--primary);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            z-index: 10;
+            font-size: clamp(14px, 2.5vw, 18px);
+        }
+
+        /* Batu Pilihan (Jawaban) */
+        .stones-container {
+            position: absolute;
+            bottom: 35%;
+            width: 100%;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 5;
+        }
+
+        .stone {
+            width: clamp(60px, 15vw, 100px);
+            height: clamp(40px, 10vw, 60px);
+            background: radial-gradient(circle at 30% 30%, var(--stone), var(--stone-dark));
+            border-radius: 50% 50% 40% 40%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: inset -2px -4px 5px rgba(0,0,0,0.4), 0 5px 10px rgba(0,0,0,0.3);
+            color: white;
+            font-weight: bold;
+            font-size: clamp(12px, 2vw, 16px);
+            transition: all 0.2s;
+            text-align: center;
+            padding: 5px;
+        }
+
+        .stone:hover {
+            transform: scale(1.1);
+            filter: brightness(1.2);
+        }
+
+        .stone-label { font-size: 1.2em; color: #FFD54F; text-shadow: 1px 1px 2px #000; }
+
+        /* Batu Awal & Karakter */
+        .start-stone {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, #8D6E63, #4E342E);
+            border-radius: 50% 50% 30% 30%;
+            box-shadow: inset -3px -5px 8px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.4);
+            z-index: 4;
+        }
+
+        .crocodile {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            z-index: 10;
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* Transisi lompatan */
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+        }
+
+        /* Pesan Umpan Balik (Benar/Salah) */
+        .feedback-msg {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 20;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 4px solid;
+            width: 80%;
+        }
+
+        .feedback-msg.show { transform: translate(-50%, -50%) scale(1); }
+        .feedback-msg.correct { border-color: var(--primary); color: var(--primary-dark); }
+        .feedback-msg.wrong { border-color: var(--danger); color: var(--danger); }
+
+        /* Efek Cuaca (Hujan) */
+        .weather-effect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 15;
+            display: none;
+        }
+        .weather-effect.raining {
+            display: block;
+            background-image: linear-gradient(transparent, rgba(255,255,255,0.3));
+            animation: rainDrop 0.2s linear infinite;
+        }
+
+        /* =========================================
+           LAYAR SELESAI (RESULT SCREEN)
+        ========================================= */
+        #result-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+        }
+
+        .result-box {
+            background: var(--primary);
+            padding: 40px;
+            border-radius: 20px;
+            border: 5px solid #fff;
+            max-width: 90%;
+            width: 500px;
+            animation: dropIn 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        .result-stats {
+            background: #fff;
+            color: #333;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        /* =========================================
+           ANIMASI KEYFRAMES
+        ========================================= */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes moveCloud {
+            from { left: -20%; }
+            to { left: 120%; }
+        }
+        @keyframes rainDrop {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 100vh; }
+        }
+        @keyframes dropIn {
+            from { transform: translateY(-100vh); }
+            to { transform: translateY(0); }
+        }
+
+        /* =========================================
+           RESPONSIVE DESIGN (Media Queries)
+        ========================================= */
+        @media (max-width: 768px) {
+            /* Di HP, Mode Duel menjadi atas-bawah */
+            #game-container { flex-direction: column; }
+            .info-panel { padding: 5px 10px; font-size: 12px; }
+            .question-box { top: 5%; padding: 10px; font-size: 12px; width: 90%; }
+            .tree { font-size: 25px; }
+            .crocodile { font-size: 40px; bottom: 20px; }
+            .stones-container { bottom: 25%; }
+            .start-stone { bottom: 5%; height: 40px; width: 80px;}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- KONTROL GLOBAL -->
+    <div id="global-controls">
+        <button class="control-btn" id="btn-audio" title="Audio ON/OFF">🔊</button>
+        <button class="control-btn" id="btn-restart" title="Restart" style="display:none;">🔄</button>
+        <button class="control-btn" id="btn-home" title="Home" style="display:none;">🏠</button>
+        <button class="control-btn" id="btn-fullscreen" title="Full Screen">⛶</button>
+    </div>
+
+    <!-- MENU UTAMA -->
+    <div id="main-menu">
+        <div class="menu-content">
+            <h1>🐊 PETUALANGAN BUAYA CERDAS</h1>
+            <h2>Belajar Bangun Datar Kelas 5 SD</h2>
+            <h3>Dibuat oleh: Atok Mustofa</h3>
+            <div>
+                <button class="mode-btn" onclick="startGame('solo')">👤 SOLO MODE</button>
+                <button class="mode-btn" onclick="startGame('duel')">👥 DUEL MODE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AREA PERMAINAN -->
+    <div id="game-container">
+        <!-- Area Pemain akan di-generate oleh JavaScript di sini -->
+    </div>
+
+    <!-- LAYAR HASIL AKHIR -->
+    <div id="result-screen">
+        <div class="result-box">
+            <h1 style="color:white; text-shadow: none; font-size: 32px;">🏆 SELAMAT!</h1>
+            <p>Buaya berhasil mencapai Pulau Matematika!</p>
+            <div id="result-details" class="result-stats">
+                <!-- Hasil diisi oleh JS -->
+            </div>
+            <button class="mode-btn" onclick="location.reload()">Main Lagi</button>
+        </div>
+    </div>
+
+    <!-- SOUND SYSTEM (Web Audio API - Tidak butuh file eksternal) -->
+    <script>
+        /* =========================================
+           DATA SOAL MATEMATIKA BANGUN DATAR
+        ========================================= */
+        const soalList = [
+            {
+                q: "Sebuah persegi memiliki sisi 8 cm. Luas persegi tersebut adalah ...",
+                opts: ["16 cm²", "32 cm²", "64 cm²", "80 cm²"],
+                ans: 2, // Index C
+                msg: "Hebat! Buaya menemukan persegi ajaib."
+            },
+            {
+                q: "Persegi panjang memiliki panjang 10 cm dan lebar 5 cm. Luasnya adalah ...",
+                opts: ["15 cm²", "30 cm²", "50 cm²", "60 cm²"],
+                ans: 2, // Index C
+                msg: "Buaya berhasil menyeberangi sungai!"
+            },
+            {
+                q: "Keliling persegi dengan sisi 7 cm adalah ...",
+                opts: ["14 cm", "21 cm", "28 cm", "49 cm"],
+                ans: 2, // Index C
+                msg: "Lompatan sempurna!"
+            },
+            {
+                q: "Keliling persegi panjang dengan panjang 12 cm dan lebar 4 cm adalah ...",
+                opts: ["16 cm", "24 cm", "32 cm", "48 cm"],
+                ans: 2, // Index C
+                msg: "Buaya semakin cepat!"
+            },
+            {
+                q: "Bangun datar yang memiliki 3 sisi disebut ...",
+                opts: ["Lingkaran", "Segitiga", "Persegi", "Trapesium"],
+                ans: 1, // Index B
+                msg: "Jawaban tepat!"
+            },
+            {
+                q: "Bangun datar yang memiliki 4 sisi sama panjang adalah ...",
+                opts: ["Persegi", "Segitiga", "Lingkaran", "Layang-layang"],
+                ans: 0, // Index A
+                msg: "Buaya menemukan harta karun!"
+            },
+            {
+                q: "Jumlah sisi pada segitiga adalah ...",
+                opts: ["2", "3", "4", "5"],
+                ans: 1, // Index B
+                msg: "Hebat sekali!"
+            },
+            {
+                q: "Lingkaran memiliki ...",
+                opts: ["1 sisi lengkung", "2 sisi", "3 sisi", "4 sisi"],
+                ans: 0, // Index A
+                msg: "Buaya berhasil melewati arus deras!"
+            },
+            {
+                q: "Luas persegi panjang dengan panjang 9 cm dan lebar 4 cm adalah ...",
+                opts: ["13 cm²", "26 cm²", "36 cm²", "45 cm²"],
+                ans: 2, // Index C
+                msg: "Keren! Jawabanmu benar."
+            },
+            {
+                q: "Bangun datar yang tidak memiliki sudut adalah ...",
+                opts: ["Persegi", "Segitiga", "Trapesium", "Lingkaran"],
+                ans: 3, // Index D
+                msg: "SELAMAT! Buaya berhasil mencapai Pulau Matematika!"
+            }
+        ];
+
+        const alphabet = ['A', 'B', 'C', 'D'];
+
+        /* =========================================
+           STATE MANAJEMEN GAME
+        ========================================= */
+        let gameState = {
+            mode: 'solo',
+            players: [],
+            audioEnabled: true
+        };
+
+        // DOM Elements
+        const mainMenu = document.getElementById('main-menu');
+        const gameContainer = document.getElementById('game-container');
+        const resultScreen = document.getElementById('result-screen');
+        const btnHome = document.getElementById('btn-home');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnAudio = document.getElementById('btn-audio');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+
+        /* =========================================
+           SISTEM AUDIO (Web Audio API Sintetis)
+        ========================================= */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!gameState.audioEnabled || audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playJump() { playTone(300, 'sine', 0.1); setTimeout(() => playTone(500, 'sine', 0.1), 100); }
+        function playCorrect() { playTone(523.25, 'triangle', 0.1); setTimeout(() => playTone(659.25, 'triangle', 0.2), 100); }
+        function playWrong() { playTone(200, 'sawtooth', 0.2); setTimeout(() => playTone(150, 'sawtooth', 0.3), 200); }
+        function playWin() { 
+            const notes = [523, 659, 783, 1046]; 
+            notes.forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.2, 0.2), i * 150));
+        }
+
+        // BGM Sederhana (Melodi looping)
+        let bgmInterval;
+        function startBGM() {
+            if (bgmInterval) clearInterval(bgmInterval);
+            const notes = [261.63, 329.63, 392.00, 329.63]; // C E G E
+            let i = 0;
+            bgmInterval = setInterval(() => {
+                if(gameState.audioEnabled) playTone(notes[i], 'triangle', 0.3, 0.05);
+                i = (i + 1) % notes.length;
+            }, 600);
+        }
+        function stopBGM() { clearInterval(bgmInterval); }
+
+        /* =========================================
+           LOGIKA PERMAINAN
+        ========================================= */
+        function startGame(mode) {
+            // Inisialisasi Audio saat interaksi pertama user (Kebijakan browser)
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            gameState.mode = mode;
+            gameState.players = [];
+            
+            let playerCount = mode === 'solo' ? 1 : 2;
+            gameContainer.innerHTML = ''; // Bersihkan container
+
+            for (let i = 0; i < playerCount; i++) {
+                gameState.players.push({
+                    id: i + 1,
+                    score: 0,
+                    correct: 0,
+                    wrong: 0,
+                    currentQ: 0,
+                    isAnimating: false,
+                    finished: false
+                });
+                createPlayerArea(i);
+            }
+
+            mainMenu.style.display = 'none';
+            gameContainer.style.display = 'flex';
+            btnHome.style.display = 'block';
+            btnRestart.style.display = 'block';
+            
+            startBGM();
+
+            // Render soal pertama untuk setiap pemain
+            for (let i = 0; i < playerCount; i++) {
+                loadQuestion(i);
+            }
+        }
+
+        function createPlayerArea(pIndex) {
+            const player = gameState.players[pIndex];
+            const area = document.createElement('div');
+            area.className = 'player-area';
+            area.id = `player-area-${pIndex}`;
+
+            // Jika Duel, berikan border pemisah
+            if (gameState.mode === 'duel' && pIndex === 0) {
+                area.style.borderRight = "4px solid #333";
+            }
+
+            area.innerHTML = `
+                <div class="info-panel">
+                    <span>Player ${player.id}</span>
+                    <span>Level: <span id="lvl-${pIndex}">1/10</span></span>
+                    <span>Score: <span id="score-${pIndex}">0</span></span>
+                </div>
+                <div class="weather-effect" id="weather-${pIndex}"></div>
+                <div class="environment">
+                    <div class="cloud" style="top:10px;">☁️</div>
+                    <div class="cloud" style="top:40px; animation-duration: 25s;">☁️</div>
+                    <div class="river">
+                        <div class="tree left">🌴</div>
+                        <div class="tree right">🌳</div>
+                        
+                        <div class="stones-container" id="stones-${pIndex}">
+                            <!-- Batu Pilihan di-generate JS -->
+                        </div>
+                        
+                        <div class="start-stone"></div>
+                        <div class="crocodile" id="croc-${pIndex}">🐊</div>
+                    </div>
+                </div>
+                <div class="question-box" id="qbox-${pIndex}">Memuat soal...</div>
+                <div class="feedback-msg" id="feedback-${pIndex}"></div>
+            `;
+            gameContainer.appendChild(area);
+        }
+
+        function loadQuestion(pIndex) {
+            const player = gameState.players[pIndex];
+            
+            if (player.currentQ >= soalList.length) {
+                player.finished = true;
+                document.getElementById(`qbox-${pIndex}`).innerHTML = "<b>Selesai! Menunggu hasil...</b>";
+                document.getElementById(`stones-${pIndex}`).innerHTML = "";
+                checkAllFinished();
+                return;
+            }
+
+            const soal = soalList[player.currentQ];
+            document.getElementById(`lvl-${pIndex}`).innerText = `${player.currentQ + 1}/10`;
+            document.getElementById(`qbox-${pIndex}`).innerText = soal.q;
+
+            const stonesContainer = document.getElementById(`stones-${pIndex}`);
+            stonesContainer.innerHTML = '';
+
+            soal.opts.forEach((opt, idx) => {
+                const stone = document.createElement('div');
+                stone.className = 'stone';
+                stone.innerHTML = `<span class="stone-label">${alphabet[idx]}</span><span>${opt}</span>`;
+                // Hitung posisi relative untuk animasi lompat
+                stone.onclick = (e) => handleAnswer(pIndex, idx, e.currentTarget);
+                stonesContainer.appendChild(stone);
+            });
+
+            // Reset buaya ke posisi awal
+            const croc = document.getElementById(`croc-${pIndex}`);
+            croc.style.transform = 'translate(-50%, 0) scale(1)';
+            croc.innerText = '🐊';
+        }
+
+        function handleAnswer(pIndex, selectedIdx, targetStone) {
+            const player = gameState.players[pIndex];
+            if (player.isAnimating || player.finished) return; // Cegah double klik
+            
+            player.isAnimating = true;
+            const soal = soalList[player.currentQ];
+            const isCorrect = (selectedIdx === soal.ans);
+            const croc = document.getElementById(`croc-${pIndex}`);
+            
+            // Hitung jarak lompat (Simulasi sederhana dengan persentase)
+            // Karena start di bottom:30px left:50% dan target di dalam .stones-container (bottom:35%)
+            // Kita gunakan transform translate agar smooth
+            
+            playJump();
+            
+            // Dapatkan koordinat relative
+            const stoneRect = targetStone.getBoundingClientRect();
+            const crocRect = croc.getBoundingClientRect();
+            const deltaX = stoneRect.left + (stoneRect.width/2) - (crocRect.left + (crocRect.width/2));
+            const deltaY = stoneRect.top - crocRect.top - 20;
+
+            // Animasi lompat ke batu
+            croc.style.transform = `translate(calc(-50% + ${deltaX}px), ${deltaY}px)`;
+
+            setTimeout(() => {
+                showFeedback(pIndex, isCorrect, soal.msg);
+            }, 600); // Tunggu buaya sampai di batu
+        }
+
+        function showFeedback(pIndex, isCorrect, message) {
+            const player = gameState.players[pIndex];
+            const croc = document.getElementById(`croc-${pIndex}`);
+            const area = document.getElementById(`player-area-${pIndex}`);
+            const feedback = document.getElementById(`feedback-${pIndex}`);
+            const weather = document.getElementById(`weather-${pIndex}`);
+
+            feedback.innerText = isCorrect ? message : "Ups! Salah, buaya terpeleset!";
+            feedback.className = `feedback-msg show ${isCorrect ? 'correct' : 'wrong'}`;
+
+            if (isCorrect) {
+                playCorrect();
+                player.score += 10;
+                player.correct++;
+                document.getElementById(`score-${pIndex}`).innerText = player.score;
+                croc.innerText = '🐊✨'; // Buaya senyum + bintang
+                area.classList.add('sunny');
+                
+                // Animasi mutar bahagia
+                let currentTransform = croc.style.transform;
+                croc.style.transform = currentTransform + ' rotate(360deg) scale(1.2)';
+
+            } else {
+                playWrong();
+                player.wrong++;
+                croc.innerText = '🐊💦'; // Buaya sedih/basah
+                area.classList.add('cloudy');
+                weather.classList.add('raining');
+                
+                // Jatuh ke air
+                croc.style.transform = 'translate(-50%, 50px) rotate(-180deg)';
+            }
+
+            // Lanjut soal berikutnya setelah 2 detik
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                area.classList.remove('sunny', 'cloudy');
+                weather.classList.remove('raining');
+                
+                player.currentQ++;
+                player.isAnimating = false;
+                loadQuestion(pIndex);
+            }, 2500);
+        }
+
+        function checkAllFinished() {
+            const allFinished = gameState.players.every(p => p.finished);
+            if (allFinished) {
+                setTimeout(showResults, 1000);
+            }
+        }
+
+        function showResults() {
+            stopBGM();
+            playWin();
+            resultScreen.style.display = 'flex';
+            const details = document.getElementById('result-details');
+            
+            if (gameState.mode === 'solo') {
+                const p = gameState.players[0];
+                const persen = Math.round((p.correct / 10) * 100);
+                details.innerHTML = `
+                    <p>Skor Akhir: <b>${p.score}</b></p>
+                    <p>Benar: <span style="color:green">✅ ${p.correct}</span> | Salah: <span style="color:red">❌ ${p.wrong}</span></p>
+                    <p>Persentase: <b>${persen}%</b></p>
+                `;
+            } else {
+                // Duel Mode
+                const p1 = gameState.players[0];
+                const p2 = gameState.players[1];
+                let winnerText = "";
+                if (p1.score > p2.score) winnerText = "🥇 Player 1 MENANG!";
+                else if (p2.score > p1.score) winnerText = "🥇 Player 2 MENANG!";
+                else winnerText = "🤝 SERI!";
+
+                details.innerHTML = `
+                    <h2 style="color:var(--danger); margin-bottom:10px;">${winnerText}</h2>
+                    <div style="display:flex; justify-content:space-around;">
+                        <div>
+                            <b>Player 1</b><br>
+                            Skor: ${p1.score}<br>
+                            ✅ ${p1.correct} | ❌ ${p1.wrong}
+                        </div>
+                        <div>
+                            <b>Player 2</b><br>
+                            Skor: ${p2.score}<br>
+                            ✅ ${p2.correct} | ❌ ${p2.wrong}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        /* =========================================
+           EVENT LISTENERS KONTROL GLOBAL
+        ========================================= */
+        btnAudio.onclick = () => {
+            gameState.audioEnabled = !gameState.audioEnabled;
+            btnAudio.innerText = gameState.audioEnabled ? '🔊' : '🔇';
+            if (!gameState.audioEnabled) stopBGM();
+            else if (gameContainer.style.display === 'flex') startBGM();
+        };
+
+        btnRestart.onclick = () => {
+            if (confirm("Mulai ulang permainan ini?")) {
+                startGame(gameState.mode);
+            }
+        };
+
+        btnHome.onclick = () => {
+            if (confirm("Kembali ke Menu Utama?")) {
+                location.reload();
+            }
+        };
+
+        btnFullscreen.onclick = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error fullscreen: ${err.message}`);
+                });
+                btnFullscreen.innerText = '🗗';
+            } else {
+                document.exitFullscreen();
+                btnFullscreen.innerText = '⛶';
+            }
+        };
+
+    </script>
+</body>
+</html>
